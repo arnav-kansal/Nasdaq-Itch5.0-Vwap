@@ -29,15 +29,15 @@ uint64_t reinterpret8bytes(const char *w){
 }
 
 uint64_t reinterpret6bytes(const char *w){
-    return (__builtin_bswap64(*reinterpret_cast<uint64_t*>(&w[0])) & (((1L << 48) - 1) << 16)) >> 16;
+    return (__builtin_bswap64(*reinterpret_cast<uint64_t*>(const_cast<char*>(&w[0]))) & (((1L << 48) - 1) << 16)) >> 16;
 }
 
 uint32_t reinterpret4bytes(const char *w){
-    return __builtin_bswap32(*(reinterpret_cast<uint32_t*>(&w[0])));
+    return __builtin_bswap32(*(reinterpret_cast<uint32_t*>(const_cast<char*>(&w[0]))));
 }
 
 uint16_t reinterpret2bytes(const char *w){
-    return __builtin_bswap16(*(reinterpret_cast<uint16_t*>(&w[0])));
+    return __builtin_bswap16(*(reinterpret_cast<uint16_t*>(const_cast<char*>(&w[0]))));
 }
 // Order structure holding price, qty and locate id of security.
 // locateId is in the range(1, 1<<16)
@@ -74,7 +74,7 @@ void systemMsg(const char* msg_start){
 // populating locatedId -> stock symbol string mappings
 void stockRelatedMsg(const char* msg_start){
     LocateId locateId = reinterpret2bytes(msg_start + 1);
-    std::string symbol(reinterpret_cast<char*>(msg_start) + 11, 8);
+    std::string symbol(msg_start + 11, 8);
     
     stockSymbols[locateId] = symbol;
     attributedBuyOrders[locateId] = std::vector<Order>();

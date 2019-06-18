@@ -11,21 +11,21 @@ namespace trex{
 // including the market close
 void printVwap(const std::string& outputDir){
     std::ofstream outFile(outputDir + formatTime(CURRTIME)+ ".txt");
-    outFile << "VWAP at " << CURRTIME << "\n";
+    outFile << "VWAP at " << CURRTIME << '\n';
     for(size_t locateId = 1; locateId < attributedBuyOrders.size(); ++locateId){
         if(attributedBuyOrders[locateId].empty())
             continue;
         
         uint64_t volume = 0;
         uint64_t priceWtVolume = 0;
-
+        
         for(auto& order : attributedBuyOrders[locateId]){
             volume += order._qty;
-            priceWtVolume += (order._qty * order._price);
+            priceWtVolume += ((uint64_t)order._qty * (uint64_t)order._price);
         }
-        outFile << stockSymbols[locateId] << " " << (double)priceWtVolume/(volume * 10000) << "\n";
+        outFile << stockSymbols[locateId] << " " << (double)priceWtVolume/(volume * 10000) << '\n';
     }
-    outFile << "-----------------" << "\n";
+    outFile << "-----------------" << '\n';
 }
 
 // parses the NASDAQ ITCH 5.0 protocol file.
