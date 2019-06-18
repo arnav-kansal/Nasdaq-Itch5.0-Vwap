@@ -45,7 +45,6 @@ struct Order{
     price_t _price;
     qty_t _qty;
     LocateId _id;
-    Order(){}
     Order(price_t price, qty_t qty, LocateId id) : _price(price), _qty(qty), _id(id){} 
 };
 
@@ -87,10 +86,10 @@ void addOrder(const char* msg_start){
     CURRTIME = reinterpret6bytes(msg_start + 5);
     OrderId orderId = reinterpret8bytes(msg_start + 11);
     if(msg_start[19] == 'B'){
-        allBuyOrders[orderId] = Order(
+        allBuyOrders.emplace(orderId, Order(
                 reinterpret4bytes(msg_start + 32), // price
                 reinterpret4bytes(msg_start + 20), // qty
-                locateId);
+                locateId));
     }
 }
 
@@ -106,11 +105,10 @@ void orderExec(const char* msg_start){
         return;
     price_t price = pair->second._price;
      
-   if(qty == pair->second._qty){
+    if(qty == pair->second._qty){
         allBuyOrders.erase(pair); 
     }else{
-        qty_t newQty = pair->second._qty - qty;
-        allBuyOrders[orderId] = Order(price, newQty, locateId);
+        pair->second._qty -= qty;
     }
     attributedBuyOrders[locateId].push_back(Order(price, qty, locateId));
 }
@@ -132,8 +130,7 @@ void orderExecPrice(const char* msg_start){
     if(qty == pair->second._qty){
         allBuyOrders.erase(pair); 
     }else{
-        qty_t newQty = pair->second._qty - qty;
-        allBuyOrders[orderId] = Order(price, newQty, locateId);
+        pair->second._qty -= qty;
     }
     attributedBuyOrders[locateId].push_back(Order(price, qty, locateId));
 }
@@ -145,11 +142,9 @@ void orderCancel(const char* msg_start){
     auto pair = allBuyOrders.find(orderId);
     if(pair == allBuyOrders.end())
         return ;
-    Order order = pair->second;
-    order._qty -= cancelledQty;
-    if(order._qty == 0)
+    pair->second._qty -= cancelledQty;
+    if(pair->second._qty == 0)
         allBuyOrders.erase(pair);
-    allBuyOrders[orderId] = order;
 }
 
 void orderDelete(const char* msg_start){
@@ -169,7 +164,7 @@ void orderReplace(const char* msg_start){
     if(pair == allBuyOrders.end())
         return;
     allBuyOrders.erase(pair);
-    allBuyOrders[newId] = Order(newPrice, newQty, locateId);
+    allBuyOrders.emplace(newId, Order(newPrice, newQty, locateId));
 }
 
 //  [TODO]: clarify:
