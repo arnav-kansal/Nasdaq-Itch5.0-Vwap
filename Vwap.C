@@ -34,12 +34,12 @@ void printVwap(const std::string& outputDir){
 //  @start/@end: mmap ptr to start/end of file
 //  @output: output dir for VWAP values at each hour
 //  @numMsg: number of messages processed
-void process(const unsigned char* start, const unsigned char* end, const std::string& output, uintmax_t &numMsg){
-    unsigned char* fptr = const_cast<unsigned char*>(start);
+void process(const char* start, const char* end, const std::string& output, uintmax_t &numMsg){
+    const char* fptr = start;
     while(fptr <= end){
         numMsg += 1;
         uint16_t msg_size = reinterpret2bytes(fptr);
-        unsigned char* msg_start = fptr + (size_t)2;
+        const char* msg_start = fptr + (size_t)2;
 
         switch(msg_start[0]){
             case 'S':
@@ -118,8 +118,8 @@ int main(int argc, char** argv){
     std::string outputDir = vm["output"].as<std::string>();
     
     boost::iostreams::mapped_file mmap(inputDir, boost::iostreams::mapped_file::readonly);
-    const unsigned char* f = reinterpret_cast<const unsigned char*>(mmap.const_data());
-    const unsigned char* l = f + mmap.size();
+    const char* f = mmap.const_data();
+    const char* l = f + mmap.size();
     
     uintmax_t m_numMsgs = 0;
     trex::process(f, l, outputDir, m_numMsgs);

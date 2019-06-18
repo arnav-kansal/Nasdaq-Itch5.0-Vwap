@@ -24,19 +24,19 @@ uint64_t LASTPRINTED = HOUR * 3;
 bool END = false;
 
 // using compiler lib __builtin_ functions for network order->little endian
-uint64_t reinterpret8bytes(unsigned char *w){
-    return __builtin_bswap64(*(reinterpret_cast<uint64_t*>(&w[0])));
+uint64_t reinterpret8bytes(const char *w){
+    return __builtin_bswap64(*(reinterpret_cast<uint64_t*>(const_cast<char*>(&w[0]))));
 }
 
-uint64_t reinterpret6bytes(unsigned char *w){
+uint64_t reinterpret6bytes(const char *w){
     return (__builtin_bswap64(*reinterpret_cast<uint64_t*>(&w[0])) & (((1L << 48) - 1) << 16)) >> 16;
 }
 
-uint32_t reinterpret4bytes(unsigned char *w){
+uint32_t reinterpret4bytes(const char *w){
     return __builtin_bswap32(*(reinterpret_cast<uint32_t*>(&w[0])));
 }
 
-uint16_t reinterpret2bytes(unsigned char *w){
+uint16_t reinterpret2bytes(const char *w){
     return __builtin_bswap16(*(reinterpret_cast<uint16_t*>(&w[0])));
 }
 // Order structure holding price, qty and locate id of security.
@@ -65,14 +65,14 @@ std::unordered_map<OrderId, Order> allBuyOrders;
 
 // CURRTIME is tracking time using messages and printing at 
 // each hour till market closes.
-void systemMsg(unsigned char* msg_start){
+void systemMsg(const char* msg_start){
     CURRTIME = reinterpret6bytes(msg_start + 5);
     if(msg_start[11] == 'E')
         END = true;
 }
 
 // populating locatedId -> stock symbol string mappings
-void stockRelatedMsg(unsigned char* msg_start){
+void stockRelatedMsg(const char* msg_start){
     LocateId locateId = reinterpret2bytes(msg_start + 1);
     std::string symbol(reinterpret_cast<char*>(msg_start) + 11, 8);
     
@@ -82,7 +82,7 @@ void stockRelatedMsg(unsigned char* msg_start){
 }
 
 // only tracking 'B' orders
-void addOrder(unsigned char* msg_start){
+void addOrder(const char* msg_start){
     LocateId locateId = reinterpret2bytes(msg_start + 1);
     CURRTIME = reinterpret6bytes(msg_start + 5);
     OrderId orderId = reinterpret8bytes(msg_start + 11);
@@ -96,7 +96,7 @@ void addOrder(unsigned char* msg_start){
 
 // wait for static_if or implement own for code reduction
 // orderExec and orderExecPrice are same
-void orderExec(unsigned char* msg_start){  
+void orderExec(const char* msg_start){  
     LocateId locateId = reinterpret2bytes(msg_start + 1);
     CURRTIME = reinterpret6bytes(msg_start + 5);
     OrderId orderId = reinterpret8bytes(msg_start + 11);
@@ -115,7 +115,7 @@ void orderExec(unsigned char* msg_start){
     attributedBuyOrders[locateId].push_back(Order(price, qty, locateId));
 }
 
-void orderExecPrice(unsigned char* msg_start){
+void orderExecPrice(const char* msg_start){
     LocateId locateId = reinterpret2bytes(msg_start + 1);
     CURRTIME = reinterpret6bytes(msg_start + 5);
     OrderId orderId = reinterpret8bytes(msg_start + 11);
@@ -138,7 +138,7 @@ void orderExecPrice(unsigned char* msg_start){
     attributedBuyOrders[locateId].push_back(Order(price, qty, locateId));
 }
 
-void orderCancel(unsigned char* msg_start){
+void orderCancel(const char* msg_start){
     //CURRTIME = reinterpret6bytes(msg_start + 5);
     OrderId orderId = reinterpret8bytes(msg_start + 11);
     qty_t cancelledQty = reinterpret4bytes(msg_start + 19);
@@ -152,13 +152,13 @@ void orderCancel(unsigned char* msg_start){
     allBuyOrders[orderId] = order;
 }
 
-void orderDelete(unsigned char* msg_start){
+void orderDelete(const char* msg_start){
     //CURRTIME = reinterpret6bytes(msg_start + 5);
     OrderId orderId = reinterpret8bytes(msg_start + 11);
     allBuyOrders.erase(orderId);
 }
 
-void orderReplace(unsigned char* msg_start){
+void orderReplace(const char* msg_start){
     LocateId locateId = reinterpret2bytes(msg_start + 1);
     //CURRTIME = reinterpret6bytes(msg_start + 5);
     OrderId oldId = reinterpret8bytes(msg_start + 11);
@@ -175,7 +175,7 @@ void orderReplace(unsigned char* msg_start){
 //  [TODO]: clarify:
 //  "Since Trade Messages do not affect the book, however, they may be ignored by
 //  firms just looking to build and track the Nasdaq execution system display."
-void nonCrossTrade(unsigned char* msg_start){
+void nonCrossTrade(const char* msg_start){
     /*LocateId locateId = reinterpret2bytes(msg_start + 1);
     CURRTIME = reinterpret6bytes(msg_start + 5);
     qty_t qty = reinterpret4bytes(msg_start + 20);
@@ -183,13 +183,13 @@ void nonCrossTrade(unsigned char* msg_start){
     attributedBuyOrders[locateId].push_back(Order(price, qty, locateId));*/
 }
 // [TODO]: clarify
-void crossTrade(unsigned char* msg_start){
+void crossTrade(const char* msg_start){
 }
 
 // [TODO]: clarify
 // "If a firm is only using the ITCH feed to build a book, however, it may ignore
 // these messages as they have no impact on the current book."
-void brokenTrade(unsigned char* msg_start){
+void brokenTrade(const char* msg_start){
 
 }
 
